@@ -24,7 +24,11 @@ FetchContent_Declare(raylib
 FetchContent_MakeAvailable(box2d raylib)
 
 add_executable(game src/main.cpp)
-target_include_directories(game PRIVATE src)
+# Permet d'écrire #include <SigmaSix/entity/prefabs/Enemy.hpp> (SigmaSix -> src)
+set(SIGMASIX_INC ${CMAKE_BINARY_DIR}/include)
+file(MAKE_DIRECTORY ${SIGMASIX_INC})
+file(CREATE_LINK ${CMAKE_SOURCE_DIR}/src ${SIGMASIX_INC}/SigmaSix SYMBOLIC)
+target_include_directories(game PRIVATE ${SIGMASIX_INC})
 target_link_libraries(game PRIVATE box2d raylib)
 
 # Lien des assets à côté de l'exécutable

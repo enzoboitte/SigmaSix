@@ -3,7 +3,7 @@
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
-#include "Entity.hpp"
+#include <SigmaSix/entity/Entity.hpp>
 
 // Registry ECS minimal : crée des entités et stocke des composants par type.
 class Registry {

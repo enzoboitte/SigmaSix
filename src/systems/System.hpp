@@ -1,5 +1,5 @@
 #pragma once
-#include "../entity/Registry.hpp"
+#include <SigmaSix/entity/Registry.hpp>
 
 // Interface de base des systèmes (physique, rendu, input...).
 class System {
