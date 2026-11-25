@@ -1,10 +1,11 @@
 #pragma once
-#include <SigmaSix/entity/Registry.hpp>
+#include <SigmaSix/ecs/Registry.hpp>
 
-// Interface de base des systèmes (physique, rendu, input...).
+// Interface de base des systèmes (input, physique, rendu...).
 class System {
 public:
     virtual ~System() = default;
+    virtual void fixedUpdate(Registry&, float /*dt*/) {}
     virtual void update(Registry&, float /*dt*/) {}
     virtual void draw(Registry&) {}
 };
