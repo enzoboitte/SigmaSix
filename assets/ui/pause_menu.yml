@@ -1,0 +1,48 @@
+# pause_menu.yml
+Screen:
+  Size: [800, 600]
+  Scale: Fit
+
+Window:
+  Title: "PAUSE"
+  Anchor: Center
+  Size: [320, 280]
+  Style: "Tactical"
+  Closable: false
+
+  Children:
+    - Type: Label
+      Text: "SIGMASIX"
+      Anchor: Top
+      Position: [0, 40]
+      Style: "Header"
+
+    - Type: Button
+      Text: "REPRENDRE"
+      Anchor: Top
+      Position: [0, 100]
+      Size: [200, 36]
+      Action: "Resume"
+
+    - Type: Slider
+      Id: "volume"
+      Text: "Volume"
+      Anchor: Top
+      Position: [20, 150]
+      Size: [160, 20]
+      Value: 80
+      ShowValue: true
+      Action: "VolumeChanged"
+
+    - Type: Button
+      Text: "QUITTER"
+      Anchor: Top
+      Position: [0, 190]
+      Size: [200, 36]
+      Action: "Quit"
+
+    - Type: Label
+      Text: "v1.0.0"
+      Anchor: BottomRight
+      Position: [-8, -4]
+      Style: "Footer"
