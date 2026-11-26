@@ -79,6 +79,10 @@ int main() {
             camera->end();
 
             for (auto& s : systems_shaders) s->draw(reg);
+
+            if (pause.visible)
+                pause.draw();
+            
         EndDrawing();
     }
     CloseWindow();
