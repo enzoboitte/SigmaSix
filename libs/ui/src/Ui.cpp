@@ -1,3 +1,19 @@
+#include <raylib.h>
+
+static float g_radius = 0;
+
+// Remplace le dessin des rectangles raygui (hook injecté dans raygui.h par CMake) : rayon en pixels.
+static bool roundedRectangle(Rectangle r, int border, Color borderColor, Color color)
+{
+    const float side = r.width < r.height ? r.width : r.height;
+    if (g_radius <= 0 || side <= 0) return false;
+    const float roundness = 2 * g_radius / side > 1 ? 1 : 2 * g_radius / side;
+    if (color.a) DrawRectangleRounded(r, roundness, 8, color);
+    if (border > 0 && borderColor.a) DrawRectangleRoundedLinesEx(r, roundness, 8, static_cast<float>(border), borderColor);
+    return true;
+}
+
+#define RAYGUI_DRAW_RECTANGLE_HOOK roundedRectangle
 #define RAYGUI_IMPLEMENTATION
 #include <raygui.h>
 #include <SigmaUi/Ui.hpp>
@@ -9,7 +25,10 @@ namespace ui {
 namespace {
 
 std::unordered_map<std::string, Style> g_styles;
+float g_themeRadius[RAYGUI_MAX_CONTROLS] = {0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+float g_styleRadius = -1;
 int g_textSize = 10;
+Font g_font{};
 
 const char* kAnchors[] = {"TopLeft", "Top", "TopRight", "Left", "Center", "Right", "BottomLeft", "Bottom", "BottomRight"};
 
@@ -28,17 +47,52 @@ int color(const yaml::Node& n)
     return static_cast<int>(std::stoul(s, nullptr, 16));
 }
 
+int control(const std::string& t)
+{
+    static const std::unordered_map<std::string, int> controls = {
+        {"Default", DEFAULT}, {"Label", LABEL}, {"Button", BUTTON}, {"LabelButton", BUTTON}, {"Toggle", TOGGLE},
+        {"ToggleGroup", TOGGLE}, {"CheckBox", CHECKBOX}, {"ComboBox", COMBOBOX}, {"Dropdown", DROPDOWNBOX},
+        {"TextBox", TEXTBOX}, {"ValueBox", VALUEBOX}, {"Spinner", VALUEBOX}, {"Slider", SLIDER}, {"SliderBar", SLIDER},
+        {"ProgressBar", PROGRESSBAR}, {"StatusBar", STATUSBAR}, {"ScrollBar", SCROLLBAR}, {"ListView", LISTVIEW}};
+    auto it = controls.find(t);
+    return it == controls.end() ? -1 : it->second;
+}
+
+int property(const std::string& key)
+{
+    static const auto props = [] {
+        std::unordered_map<std::string, int> m = {
+            {"BorderWidth", BORDER_WIDTH}, {"TextPadding", TEXT_PADDING}, {"Align", TEXT_ALIGNMENT},
+            {"TextSpacing", TEXT_SPACING}, {"LineColor", LINE_COLOR}, {"BackgroundColor", BACKGROUND_COLOR},
+            {"TextLineSpacing", TEXT_LINE_SPACING}};
+        const char* parts[] = {"Border", "Base", "Text"};
+        const char* states[] = {"", "Focused", "Pressed", "Disabled"};
+        for (int st = 0; st < 4; ++st)
+            for (int p = 0; p < 3; ++p) m[std::string(parts[p]) + "Color" + states[st]] = p + 3 * st;
+        return m;
+    }();
+    auto it = props.find(key);
+    return it == props.end() ? -1 : it->second;
+}
+
 Style parseStyle(const yaml::Node& n)
 {
     Style s;
-    s.textSize = static_cast<int>(n["TextSize"].asInt());
-    const std::string align = n["Align"].asString();
-    s.align = align == "Left" ? TEXT_ALIGN_LEFT : align == "Center" ? TEXT_ALIGN_CENTER : align == "Right" ? TEXT_ALIGN_RIGHT : -1;
-    s.textColor = color(n["TextColor"]);
-    s.baseColor = color(n["BaseColor"]);
-    s.borderColor = color(n["BorderColor"]);
-    s.backgroundColor = color(n["BackgroundColor"]);
-    s.file = n["File"].asString();
+    for (std::size_t i = 0; i < n.size() && n.isMap(); ++i) {
+        const std::string& key = n.keys()[i];
+        const yaml::Node& v = n.items()[i];
+        if (key == "TextSize") s.textSize = static_cast<int>(v.asInt());
+        else if (key == "Radius") s.radius = v.asFloat();
+        else if (key == "File") s.file = v.asString();
+        else if (key == "Font") s.font = v.asString();
+        else if (const int p = property(key); p >= 0) {
+            const std::string a = v.asString();
+            const int value = key.find("Color") != std::string::npos ? color(v)
+                            : p == TEXT_ALIGNMENT ? (a == "Left" ? 0 : a == "Right" ? 2 : a == "Center" ? 1 : static_cast<int>(v.asInt(1)))
+                            : static_cast<int>(v.asInt());
+            s.props.emplace_back(p, value);
+        }
+    }
     return s;
 }
 
@@ -48,52 +102,40 @@ void readStyles(const yaml::Node& styles)
         g_styles[styles.keys()[i]] = parseStyle(styles.items()[i]);
 }
 
-int control(const std::string& t)
-{
-    if (t == "Label") return LABEL;
-    if (t == "Button" || t == "LabelButton") return BUTTON;
-    if (t == "Toggle" || t == "ToggleGroup") return TOGGLE;
-    if (t == "CheckBox") return CHECKBOX;
-    if (t == "ComboBox") return COMBOBOX;
-    if (t == "Dropdown") return DROPDOWNBOX;
-    if (t == "TextBox") return TEXTBOX;
-    if (t == "ValueBox" || t == "Spinner") return VALUEBOX;
-    if (t == "Slider" || t == "SliderBar") return SLIDER;
-    if (t == "ProgressBar") return PROGRESSBAR;
-    if (t == "StatusBar") return STATUSBAR;
-    return DEFAULT;
-}
-
-// Applique un style le temps d'un dessin puis restaure l'état raygui.
+// Applique un style le temps d'un dessin (enfants inclus) puis restaure l'état raygui.
 class StyleScope {
 public:
     StyleScope(const Element& e, float scale)
     {
         auto it = g_styles.find(e.style);
         const Style* s = it == g_styles.end() ? nullptr : &it->second;
-        const int c = control(e.type);
+        const int c = std::max(control(e.type), 0);
         if (s && s->textSize) g_textSize = s->textSize;
+        if (s && s->radius >= 0) g_styleRadius = s->radius;
+        g_radius = scale * (g_styleRadius >= 0 ? g_styleRadius : g_themeRadius[c] >= 0 ? g_themeRadius[c] : g_themeRadius[DEFAULT]);
         set(DEFAULT, TEXT_SIZE, static_cast<int>(g_textSize * scale + 0.5f));
-        if (!s) return;
-        if (s->align >= 0) set(c, TEXT_ALIGNMENT, s->align);
-        if (s->textColor) set(c, TEXT_COLOR_NORMAL, s->textColor);
-        if (s->baseColor) set(c, BASE_COLOR_NORMAL, s->baseColor);
-        if (s->borderColor) set(c, BORDER_COLOR_NORMAL, s->borderColor);
-        if (s->backgroundColor) set(DEFAULT, BACKGROUND_COLOR, s->backgroundColor);
+        if (s)
+            for (auto [p, v] : s->props) set(p >= RAYGUI_MAX_PROPS_BASE ? DEFAULT : c, p, v);
     }
     ~StyleScope()
     {
         g_textSize = m_textSize;
+        g_styleRadius = m_styleRadius;
+        g_radius = m_radius;
         for (auto it = m_saved.rbegin(); it != m_saved.rend(); ++it) GuiSetStyle(std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
     }
 
 private:
+    // DEFAULT se propage à tous les contrôles : on sauvegarde chacun pour restaurer le thème intact.
     void set(int c, int p, int v)
     {
+        if (c == DEFAULT && p < RAYGUI_MAX_PROPS_BASE)
+            for (int k = 1; k < RAYGUI_MAX_CONTROLS; ++k) m_saved.emplace_back(k, p, GuiGetStyle(k, p));
         m_saved.emplace_back(c, p, GuiGetStyle(c, p));
         GuiSetStyle(c, p, v);
     }
     int m_textSize = g_textSize;
+    float m_styleRadius = g_styleRadius, m_radius = g_radius;
     std::vector<std::tuple<int, int, int>> m_saved;
 };
 
@@ -106,11 +148,35 @@ std::string join(const std::vector<std::string>& items)
 
 }
 
+void applyTheme(const yaml::Node& theme, const std::string& dir)
+{
+    auto apply = [&](const std::string& name, const yaml::Node& node) {
+        const int c = control(name);
+        if (c < 0) return TraceLog(LOG_WARNING, "UI: composant de thème inconnu '%s'", name.c_str());
+        const Style s = parseStyle(node);
+        if (!s.file.empty()) GuiLoadStyle((dir + s.file).c_str());
+        for (auto [p, v] : s.props) GuiSetStyle(p >= RAYGUI_MAX_PROPS_BASE ? DEFAULT : c, p, v);
+        if (s.textSize) GuiSetStyle(DEFAULT, TEXT_SIZE, s.textSize);
+        if (s.radius >= 0) g_themeRadius[c] = s.radius;
+        if (!s.font.empty()) {
+            if (g_font.texture.id) UnloadFont(g_font);
+            g_font = LoadFontEx((dir + s.font).c_str(), GuiGetStyle(DEFAULT, TEXT_SIZE) * 2, nullptr, 0);
+            GuiSetFont(g_font);
+        }
+    };
+    if (theme.has("Default")) apply("Default", theme["Default"]);
+    for (std::size_t i = 0; i < theme.size() && theme.isMap(); ++i)
+        if (theme.keys()[i] != "Default") apply(theme.keys()[i], theme.items()[i]);
+}
+
 bool loadStyles(const std::string& path, std::string* error)
 {
     yaml::Node doc;
     if (!yaml::loadFile(path, doc, error)) return false;
-    readStyles(doc.has("Styles") ? doc["Styles"] : doc);
+    const auto slash = path.find_last_of("/\\");
+    const std::string dir = slash == std::string::npos ? "" : path.substr(0, slash + 1);
+    if (doc.has("Theme")) applyTheme(doc["Theme"], dir);
+    if (doc.has("Styles") || !doc.has("Theme")) readStyles(doc.has("Styles") ? doc["Styles"] : doc);
     return true;
 }
 
@@ -132,6 +198,7 @@ bool Screen::load(const std::string& path, std::string* error)
         const std::string& key = doc.keys()[i];
         const yaml::Node& node = doc.items()[i];
         if (key == "Styles") readStyles(node);
+        else if (key == "Theme") applyTheme(node, m_dir);
         else if (key == "Screen") {
             m_reference = vec2(node["Size"], {0, 0});
             const std::string mode = node["Scale"].asString();
@@ -171,9 +238,6 @@ void Screen::parseElement(const yaml::Node& n, Element& e, const std::string& ty
     }
     e.image = n["Image"].asString();
     if (!e.image.empty() && !m_textures.count(e.image)) m_textures[e.image] = LoadTexture((m_dir + e.image).c_str());
-
-    auto it = g_styles.find(e.style);
-    if (it != g_styles.end() && !it->second.file.empty()) GuiLoadStyle((m_dir + it->second.file).c_str());
 
     for (const yaml::Node& child : n["Children"].items()) parseElement(child, e.children.emplace_back(), "");
 }

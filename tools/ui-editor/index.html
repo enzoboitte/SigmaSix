@@ -12,7 +12,7 @@
     <button data-cmd="new">Nouveau</button>
     <label class="btn">Ouvrir<input type="file" id="open" accept=".yml,.yaml" hidden></label>
     <button data-cmd="save">Enregistrer .yml</button>
-    <button data-cmd="styles">Exporter styles.yml</button>
+    <button data-cmd="styles" title="Thème + styles nommés">Exporter styles.yml</button>
     <span class="sep"></span>
     <button data-cmd="undo" title="Ctrl+Z">Annuler</button>
     <button data-cmd="duplicate" title="Ctrl+D">Dupliquer</button>
@@ -38,17 +38,28 @@
     </section>
 
     <aside class="panel right">
-      <h3>Propriétés</h3>
-      <form id="props" class="props" autocomplete="off"></form>
-      <h3>Styles</h3>
-      <div class="style-bar">
-        <select id="styleList"></select>
-        <button data-cmd="addStyle">+</button>
-        <button data-cmd="delStyle">−</button>
-      </div>
-      <form id="styleProps" class="props" autocomplete="off"></form>
-      <h3>YAML <button data-cmd="applyYaml" class="small">Appliquer</button></h3>
-      <textarea id="yaml" spellcheck="false"></textarea>
+      <details open>
+        <summary><h3>Propriétés</h3></summary>
+        <form id="props" class="props" autocomplete="off"></form>
+      </details>
+      <details>
+        <summary><h3>Thème raygui</h3></summary>
+        <div class="style-bar"><select id="themeList"></select><button data-cmd="resetTheme" title="Vider ce composant">↺</button></div>
+        <form id="themeProps" class="props" autocomplete="off"></form>
+      </details>
+      <details>
+        <summary><h3>Styles nommés</h3></summary>
+        <div class="style-bar">
+          <select id="styleList"></select>
+          <button data-cmd="addStyle">+</button>
+          <button data-cmd="delStyle">−</button>
+        </div>
+        <form id="styleProps" class="props" autocomplete="off"></form>
+      </details>
+      <details open>
+        <summary><h3>YAML</h3> <button data-cmd="applyYaml" class="small">Appliquer</button></summary>
+        <textarea id="yaml" spellcheck="false"></textarea>
+      </details>
       <p id="status" class="status"></p>
     </aside>
   </main>

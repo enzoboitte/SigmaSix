@@ -31,6 +31,20 @@ const Model = (() => {
     Image: { Size: [64, 64], Image: '' },
   };
 
+  const THEME_KEYS = ['Default', 'Label', 'Button', 'Toggle', 'CheckBox', 'ComboBox', 'Dropdown', 'TextBox', 'ValueBox', 'Slider', 'ProgressBar', 'StatusBar'];
+  const THEME_ALIAS = { LabelButton: 'Button', ToggleGroup: 'Toggle', Spinner: 'ValueBox', SliderBar: 'Slider' };
+  const themeKey = type => THEME_ALIAS[type] || (THEME_KEYS.includes(type) ? type : 'Default');
+  const STATES = ['', 'Focused', 'Pressed', 'Disabled'];
+
+  // Propriétés de design raygui (thème et styles nommés)
+  const STYLE_FIELDS = [
+    ['TextSize', 'number'], ['Radius', 'number'], ['BorderWidth', 'number'], ['TextPadding', 'number'], ['TextSpacing', 'number'],
+    ['Align', 'select', ['', 'Left', 'Center', 'Right']],
+    ...STATES.flatMap(st => ['Border', 'Base', 'Text'].map(p => [`${p}Color${st}`, 'color'])),
+    ['BackgroundColor', 'color'], ['LineColor', 'color'],
+  ];
+  const THEME_FIELDS = [...STYLE_FIELDS, ['Font', 'text'], ['File', 'text']];
+
   // Propriétés éditables par type : [clé, type de champ]
   function fields(type) {
     const f = [['Id', 'text'], ['Anchor', 'anchor'], ['Position', 'vec2'], ['Size', 'vec2']];
@@ -83,10 +97,11 @@ const Model = (() => {
   function importYaml(text) {
     const doc = Yaml.parse(text) || {};
     if (typeof doc !== 'object' || Array.isArray(doc)) throw new Error('la racine doit être une map');
-    const state = { screen: { Size: [800, 600], Scale: 'Fit' }, styles: {}, roots: [] };
+    const state = { screen: { Size: [800, 600], Scale: 'Fit' }, theme: {}, styles: {}, roots: [] };
     for (const [key, node] of Object.entries(doc)) {
       if (key === 'Screen') state.screen = { Size: vec(node?.Size) || [800, 600], Scale: node?.Scale || 'None' };
       else if (key === 'Styles') state.styles = structuredClone(node || {});
+      else if (key === 'Theme') state.theme = structuredClone(node || {});
       else state.roots.push(fromNode(node || {}, key));
     }
     return state;
@@ -94,8 +109,10 @@ const Model = (() => {
 
   function exportYaml(state) {
     const doc = { Screen: { Size: state.screen.Size, Scale: state.screen.Scale } };
+    const clean = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v && Object.keys(v).length));
+    if (Object.keys(clean(state.theme)).length) doc.Theme = clean(state.theme);
     if (Object.keys(state.styles).length) doc.Styles = state.styles;
-    const used = new Set(['Screen', 'Styles']);
+    const used = new Set(['Screen', 'Styles', 'Theme']);
     for (const el of state.roots) {
       let key = used.has(el.Type) ? (el.Id || el.Type) : el.Type;
       for (let i = 2; used.has(key); i++) key = `${el.Type}${i}`;
@@ -121,5 +138,5 @@ const Model = (() => {
     return { x: parent.x + parent.w * ax - w * ax + px, y: parent.y + parent.h * ay - h * ay + py, w, h };
   }
 
-  return { ANCHORS, CONTAINERS, SLIDERS, LISTS, TYPES, fields, create, importYaml, exportYaml, layout };
+  return { ANCHORS, CONTAINERS, SLIDERS, LISTS, TYPES, THEME_KEYS, STYLE_FIELDS, THEME_FIELDS, themeKey, fields, create, importYaml, exportYaml, layout };
 })();

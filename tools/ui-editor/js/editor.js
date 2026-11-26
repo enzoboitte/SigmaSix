@@ -6,15 +6,16 @@
 Screen:
   Size: [800, 600]
   Scale: Fit
+Theme:
+  Default: {TextSize: 16, BorderWidth: 2, Radius: 4, BorderColor: "#6b8f3a", BaseColor: "#1e2a1e", TextColor: "#d8e8c0", BorderColorFocused: "#a6d65c", BaseColorFocused: "#2b3c2b", TextColorFocused: "#ffffff", BorderColorPressed: "#e0c060", BaseColorPressed: "#3a4a2a", TextColorPressed: "#e0c060", BackgroundColor: "#141c14", LineColor: "#6b8f3a"}
+  Button: {Radius: 8}
 Styles:
-  Tactical: {TextSize: 16, BaseColor: "#1e2a1e", BorderColor: "#6b8f3a", TextColor: "#d8e8c0", BackgroundColor: "#141c14"}
   Header: {TextSize: 28, TextColor: "#e0c060"}
   Footer: {TextSize: 10, TextColor: "#8a9a80"}
 Window:
   Title: "SigmaSix"
   Anchor: Center
   Size: [400, 300]
-  Style: "Tactical"
   Children:
     - Type: Label
       Text: "MISSION START"
@@ -38,7 +39,7 @@ Window:
       Style: "Footer"
 `;
 
-  let state, sel = null, fileName = 'interface.yml', styleSel = '';
+  let state, sel = null, fileName = 'interface.yml', styleSel = '', themeSel = 'Default';
   const history = [];
 
   // --- Arbre : sélection par chemin d'indices ---
@@ -51,7 +52,7 @@ Window:
 
   function load(s) { state = s; sel = null; styleSel = Object.keys(state.styles)[0] || ''; renderAll(); }
 
-  function renderAll() { renderScreen(); renderTree(); renderStage(); renderProps(); renderStyles(); renderYaml(); }
+  function renderAll() { renderScreen(); renderTree(); renderStage(); renderProps(); renderTheme(); renderStyles(); renderYaml(); }
   function refresh() { renderTree(); renderStage(); renderYaml(); }
 
   function renderScreen() {
@@ -78,9 +79,10 @@ Window:
     const nodes = [];
     const draw = (list, parent, path, inherited) => list.forEach((el, i) => {
       const p = [...path, i], r = Model.layout(el, parent, state.styles);
-      const st = { ...inherited, ...(state.styles[el.Style] || {}) };
+      const own = state.styles[el.Style] || {};
+      const st = { ...state.theme.Default, ...(state.theme[Model.themeKey(el.Type)] || {}), ...inherited, ...own };
       nodes.push(renderEl(el, r, st, p));
-      if (el.Children) draw(el.Children, r, p, Model.CONTAINERS.includes(el.Type) ? st : inherited);
+      if (el.Children) draw(el.Children, r, p, Model.CONTAINERS.includes(el.Type) ? { ...inherited, ...own } : inherited);
     });
     draw(state.roots, { x: 0, y: 0, w: W, h: H }, [], {});
     stage.replaceChildren(...nodes);
@@ -89,12 +91,19 @@ Window:
   function renderEl(el, r, st, path) {
     const t = el.Type, text = el.Text || '';
     const on = (t === 'Toggle' || t === 'CheckBox') && !!(el.Checked || +el.Value);
-    const div = h('div', { className: `el el-${el.Type}${on ? ' on' : ''}${el.Visible === false ? ' hidden' : ''}` });
-    div.style.cssText = `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;font-size:${st.TextSize || 10}px;` +
-      (st.TextColor ? `--rg-text:${st.TextColor};` : '') + (st.BaseColor ? `--rg-base:${st.BaseColor};` : '') +
-      (st.BorderColor ? `--rg-border:${st.BorderColor};` : '') + (st.BackgroundColor ? `--rg-bg:${st.BackgroundColor};` : '') +
-      (st.Align ? `justify-content:${{ Left: 'flex-start', Center: 'center', Right: 'flex-end' }[st.Align]};` : '') +
-      (el.Enabled === false ? 'opacity:.55;' : '');
+    const ia = !['Window', 'Panel', 'GroupBox', 'Container', 'Line', 'Label', 'StatusBar', 'Image', 'ProgressBar'].includes(t);
+    const div = h('div', { className: `el el-${t}${on ? ' on' : ''}${ia ? ' ia' : ''}${el.Enabled === false ? ' disabled' : ''}${el.Visible === false ? ' hidden' : ''}` });
+    let css = `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;font-size:${st.TextSize || 10}px;`;
+    [['', 'n'], ['Focused', 'f'], ['Pressed', 'p'], ['Disabled', 'd']].forEach(([state, v]) =>
+      ['Border', 'Base', 'Text'].forEach(p => { const c = st[`${p}Color${state}`]; if (c) css += `--${v}-${p.toLowerCase()}:${c};`; }));
+    if (st.BackgroundColor) css += `--rg-bg:${st.BackgroundColor};`;
+    if (st.LineColor) css += `--rg-line:${st.LineColor};`;
+    if (st.BorderWidth !== undefined) css += `--bw:${st.BorderWidth}px;`;
+    if (st.Radius !== undefined) css += `--rad:${st.Radius}px;`;
+    if (st.TextPadding !== undefined) css += `--pad:${st.TextPadding}px;`;
+    if (st.TextSpacing !== undefined) css += `letter-spacing:${st.TextSpacing}px;`;
+    if (st.Align) css += `justify-content:${{ Left: 'flex-start', Center: 'center', Right: 'flex-end' }[st.Align]};`;
+    div.style.cssText = css;
     if (t === 'Window' || t === 'Panel' || t === 'GroupBox') {
       if (t !== 'Panel' || text) div.append(h('div', { className: 'title' }, h('span', {}, el.Title || text), h('span', {}, t === 'Window' && el.Closable !== false ? '✕' : '')));
     } else if (t === 'ToggleGroup') {
@@ -191,17 +200,17 @@ Window:
       : [h('p', { className: 'empty' }, 'Sélectionne un élément ou ajoute-en un depuis la palette.')]));
   }
 
+  const styleForm = (obj, list) => obj ? list.flatMap(([k, kind, opts]) => field(obj, k, kind, () => { renderStage(); renderYaml(); }, opts)) : [];
+
+  function renderTheme() {
+    $('themeList').replaceChildren(...Model.THEME_KEYS.map(k => h('option', { value: k, selected: k === themeSel }, k + (Object.keys(state.theme[k] || {}).length ? ' •' : ''))));
+    $('themeProps').replaceChildren(...styleForm(state.theme[themeSel] ??= {}, Model.THEME_FIELDS));
+  }
+
   function renderStyles() {
-    const names = Object.keys(state.styles);
-    $('styleList').replaceChildren(...names.map(n => h('option', { value: n, selected: n === styleSel }, n)));
+    $('styleList').replaceChildren(...Object.keys(state.styles).map(n => h('option', { value: n, selected: n === styleSel }, n)));
     const st = state.styles[styleSel];
-    const onChange = () => { renderStage(); renderYaml(); };
-    $('styleProps').replaceChildren(...(st ? [
-      ...field(st, 'TextSize', 'number', onChange), ...field(st, 'Align', 'select', onChange, ['', 'Left', 'Center', 'Right']),
-      ...field(st, 'TextColor', 'color', onChange), ...field(st, 'BaseColor', 'color', onChange),
-      ...field(st, 'BorderColor', 'color', onChange), ...field(st, 'BackgroundColor', 'color', onChange),
-      ...field(st, 'File', 'text', onChange),
-    ] : [h('p', { className: 'empty' }, 'Aucun style.')]));
+    $('styleProps').replaceChildren(...(st ? styleForm(st, Model.STYLE_FIELDS) : [h('p', { className: 'empty' }, 'Aucun style.')]));
   }
 
   function renderYaml() {
@@ -225,9 +234,10 @@ Window:
   }
 
   const commands = {
-    new: () => { if (confirm('Créer une nouvelle interface vide ?')) { snapshot(); fileName = 'interface.yml'; load({ screen: { Size: [800, 600], Scale: 'Fit' }, styles: {}, roots: [] }); } },
+    new: () => { if (confirm('Créer une nouvelle interface vide ?')) { snapshot(); fileName = 'interface.yml'; load({ screen: { Size: [800, 600], Scale: 'Fit' }, theme: {}, styles: {}, roots: [] }); } },
     save: () => download(fileName, Model.exportYaml(state)),
-    styles: () => download('styles.yml', Yaml.dump({ Styles: state.styles })),
+    styles: () => download('styles.yml', Model.exportYaml({ ...state, roots: [] }).replace(/^Screen:\n(  .*\n)*/, '')),
+    resetTheme: () => { snapshot(); delete state.theme[themeSel]; renderTheme(); renderStage(); renderYaml(); },
     undo: () => { const s = history.pop(); if (!s) return; ({ state, sel } = JSON.parse(s)); renderAll(); },
     delete: () => { if (!sel) return; snapshot(); listAt(sel).splice(sel.at(-1), 1); sel = null; refresh(); renderProps(); },
     duplicate: () => {
@@ -260,6 +270,7 @@ Window:
   document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); commands[b.dataset.cmd](); }));
   $('stageWrap').onpointerdown = () => select(null);
   $('styleList').onchange = e => { styleSel = e.target.value; renderStyles(); };
+  $('themeList').onchange = e => { themeSel = e.target.value; renderTheme(); };
   ['zoom', 'grid', 'base'].forEach(id => $(id).addEventListener('input', renderStage));
   ['sw', 'sh'].forEach((id, i) => $(id).addEventListener('change', e => { snapshot(); state.screen.Size[i] = Math.max(1, +e.target.value || 1); renderStage(); renderYaml(); }));
   $('scale').onchange = e => { snapshot(); state.screen.Scale = e.target.value; renderYaml(); };

@@ -1,6 +1,6 @@
 :root {
   --bg: #16181d; --panel: #1f2229; --line: #2e323b; --fg: #d6d9df; --muted: #8a909c; --accent: #7fb446;
-  --rg-base: #c9c9c9; --rg-border: #838383; --rg-text: #686868; --rg-bg: #f5f5f5; --rg-active: #97e8ff;
+  --rg-bg: #f5f5f5; --rg-line: #90abb5;
   font: 13px/1.4 system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
@@ -22,6 +22,12 @@ input[type=number] { width: 64px; }
 .panel { background: var(--panel); overflow: auto; padding: 8px 12px; }
 .panel.left { border-right: 1px solid var(--line); }
 .panel.right { border-left: 1px solid var(--line); }
+.panel details { border-top: 1px solid var(--line); }
+.panel details:first-of-type { border-top: 0; }
+.panel summary { cursor: pointer; list-style: none; }
+.panel summary::before { content: '▸ '; color: var(--muted); }
+.panel details[open] > summary::before { content: '▾ '; }
+.panel summary h3 { display: inline; }
 .panel h3 { margin: 14px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 
 .palette { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
@@ -34,7 +40,7 @@ input[type=number] { width: 64px; }
 .tree li small { color: var(--muted); margin-left: 4px; }
 .tree li.sel small { color: #223; }
 
-.props { display: grid; grid-template-columns: 104px 1fr; gap: 4px 8px; align-items: center; }
+.props { display: grid; grid-template-columns: 128px 1fr; gap: 4px 8px; align-items: center; }
 .props label { color: var(--muted); font-size: 12px; }
 .props .row { display: flex; gap: 4px; }
 .props .row input { width: 100%; min-width: 0; }
@@ -52,35 +58,39 @@ input[type=number] { width: 64px; }
 .stage { position: relative; transform-origin: 0 0; background: #1e1e28; box-shadow: 0 0 0 1px var(--line), 0 10px 40px #0008; }
 .stage.grid { background-image: linear-gradient(#ffffff08 1px, transparent 1px), linear-gradient(90deg, #ffffff08 1px, transparent 1px); }
 
-/* Rendu proche du style raygui par défaut */
-.el { position: absolute; font: 10px/1 monospace; color: var(--rg-text); display: flex; align-items: center; justify-content: center; white-space: pre; overflow: visible; cursor: move; user-select: none; }
+/* Rendu proche de raygui. Variables : --n-* normal, --f-* survol, --p-* pressé, --d-* désactivé */
+.el { position: absolute; font: 10px/1 monospace; display: flex; align-items: center; justify-content: center; white-space: pre; overflow: visible; cursor: move; user-select: none;
+  --rg-border: var(--n-border, #838383); --rg-base: var(--n-base, #c9c9c9); --rg-text: var(--n-text, #686868); color: var(--rg-text); }
+.el.ia:hover { --rg-border: var(--f-border, #5bb2d9); --rg-base: var(--f-base, #c9effe); --rg-text: var(--f-text, #6c9bbc); }
+.el.ia:active, .el-Toggle.on, .el-tg.on { --rg-border: var(--p-border, #0492c7); --rg-base: var(--p-base, #97e8ff); --rg-text: var(--p-text, #368baf); }
+.el.disabled { --rg-border: var(--d-border, #b5c1c2); --rg-base: var(--d-base, #e6e9e9); --rg-text: var(--d-text, #aeb7b8); }
 .el.sel { outline: 1px dashed var(--accent); outline-offset: 2px; z-index: 1000; }
 .el.hidden { opacity: .35; }
-.el-Window, .el-Panel { background: var(--rg-bg); border: 1px solid var(--rg-border); align-items: flex-start; justify-content: flex-start; }
-.el-Window > .title, .el-Panel > .title { position: absolute; left: 0; right: 0; top: 0; height: 24px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; background: var(--rg-base); border-bottom: 1px solid var(--rg-border); }
-.el-GroupBox { border: 1px solid var(--rg-border); align-items: flex-start; justify-content: flex-start; }
-.el-GroupBox > .title { position: absolute; top: -6px; left: 10px; padding: 0 3px; background: inherit; }
+.el-Window, .el-Panel { background: var(--rg-bg); border: var(--bw, 1px) solid var(--rg-border); border-radius: var(--rad, 0); align-items: flex-start; justify-content: flex-start; }
+.el-Window > .title, .el-Panel > .title { position: absolute; left: 0; right: 0; top: 0; height: 24px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between; background: var(--rg-base); border: var(--bw, 1px) solid var(--rg-border); border-radius: var(--rad, 0); margin: calc(-1 * var(--bw, 1px)); }
+.el-GroupBox { border: 1px solid var(--rg-line); align-items: flex-start; justify-content: flex-start; }
+.el-GroupBox > .title { position: absolute; top: -6px; left: 10px; padding: 0 3px; background: var(--rg-bg); }
 .el-Container { outline: 1px dotted #ffffff30; }
-.el-Line { border-top: 1px solid var(--rg-border); height: 0 !important; margin-top: 6px; }
+.el-Line { border-top: 1px solid var(--rg-line); height: 0 !important; margin-top: 6px; }
 .el-Label { justify-content: flex-start; }
 .el-LabelButton { justify-content: flex-start; text-decoration: underline; }
-.el-Button, .el-Toggle, .el-ComboBox, .el-Dropdown, .el-StatusBar, .el-TextBox, .el-ValueBox, .el-Spinner, .el-tg { background: var(--rg-base); border: 2px solid var(--rg-border); }
-.el-TextBox, .el-ValueBox { background: var(--rg-bg); justify-content: flex-start; padding: 0 6px; }
-.el-StatusBar { border-width: 1px; justify-content: flex-start; padding: 0 6px; }
-.el-Toggle.on, .el-tg.on { background: var(--rg-active); border-color: #0492c7; color: #368baf; }
+.el-Button, .el-Toggle, .el-ComboBox, .el-Dropdown, .el-StatusBar, .el-TextBox, .el-ValueBox, .el-Spinner, .el-tg, .el-CheckBox, .el-Slider, .el-SliderBar, .el-ProgressBar {
+  background: var(--rg-base); border: var(--bw, 2px) solid var(--rg-border); border-radius: var(--rad, 0); padding-inline: var(--pad, 0); }
+.el-StatusBar, .el-CheckBox, .el-Slider, .el-SliderBar, .el-ProgressBar { border-width: var(--bw, 1px); }
+.el-TextBox, .el-ValueBox, .el-StatusBar { justify-content: flex-start; padding-inline: var(--pad, 6px); }
 .el-ToggleGroup { gap: 2px; }
-.el-tg { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; }
-.el-CheckBox { border: 1px solid var(--rg-border); justify-content: flex-start; }
-.el-CheckBox.on::before { content: ''; position: absolute; inset: 3px; background: var(--rg-text); }
+.el-tg { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--rg-text); }
+.el-CheckBox { justify-content: flex-start; background: none; }
+.el-CheckBox.on::before { content: ''; position: absolute; inset: 3px; background: var(--rg-text); border-radius: var(--rad, 0); }
 .el-CheckBox > span { position: absolute; left: calc(100% + 4px); }
 .el-ComboBox::after { content: '▸ 1/n'; position: absolute; right: 4px; font-size: 9px; }
 .el-Dropdown::after { content: '▾'; position: absolute; right: 6px; }
 .el-Spinner { padding: 0 24px; }
 .el-Spinner::before, .el-Spinner::after { content: '◂'; position: absolute; left: 0; width: 20px; text-align: center; }
 .el-Spinner::after { content: '▸'; left: auto; right: 0; }
-.el-Slider, .el-SliderBar, .el-ProgressBar { border: 1px solid var(--rg-border); background: var(--rg-bg); justify-content: flex-start; }
-.el .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--rg-active); }
-.el-Slider .fill { background: none; border-right: 10px solid var(--rg-active); }
+.el-Slider, .el-SliderBar, .el-ProgressBar { justify-content: flex-start; }
+.el .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--p-base, #97e8ff); border-radius: var(--rad, 0); }
+.el-Slider .fill { background: none; border-right: 10px solid var(--p-base, #97e8ff); border-radius: 0; }
 .el .side { position: absolute; top: 50%; transform: translateY(-50%); }
 .el .side.l { right: calc(100% + 6px); }
 .el .side.r { left: calc(100% + 6px); }

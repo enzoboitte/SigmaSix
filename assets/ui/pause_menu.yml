@@ -7,7 +7,6 @@ Window:
   Title: "PAUSE"
   Anchor: Center
   Size: [320, 280]
-  Style: "Tactical"
   Closable: false
 
   Children:
