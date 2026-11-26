@@ -17,11 +17,16 @@ FetchContent_Declare(box2d
 # raylib
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(SIGMASIX_RAYLIB_TAG "6.2" CACHE STRING "Tag git de raylib")
 FetchContent_Declare(raylib
   GIT_REPOSITORY https://github.com/raysan5/raylib.git
-  GIT_TAG 5.0)
+  GIT_TAG ${SIGMASIX_RAYLIB_TAG})
 
 FetchContent_MakeAvailable(box2d raylib)
+
+add_subdirectory(libs/yaml)
+add_subdirectory(libs/ui)
+add_subdirectory(tools/yml_crypt)
 
 add_executable(game src/main.cpp)
 # Permet d'écrire #include <SigmaSix/prefabs/Enemy.hpp> (SigmaSix -> src)
@@ -38,10 +43,16 @@ foreach(header ${SIGMASIX_HEADERS})
   endif()
 endforeach()
 target_include_directories(game PRIVATE ${SIGMASIX_INC})
-target_link_libraries(game PRIVATE box2d raylib)
+target_link_libraries(game PRIVATE box2d raylib SigmaUi)
 
-# Assets copiés à côté de l'exécutable (évite les liens symboliques, interdits sans privilège sous Windows)
-add_custom_target(copy_assets ALL
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${CMAKE_SOURCE_DIR}/assets/shaders ${CMAKE_BINARY_DIR}/assets/shaders)
+# Assets copiés à côté de l'exécutable, les .yml sont chiffrés au passage (sauf SIGMASIX_ENCRYPT_ASSETS=OFF)
+option(SIGMASIX_ENCRYPT_ASSETS "Chiffre les fichiers .yml des assets au build" ON)
+if(SIGMASIX_ENCRYPT_ASSETS)
+  add_custom_target(copy_assets ALL
+    COMMAND yml_crypt pack ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets
+    DEPENDS yml_crypt)
+else()
+  add_custom_target(copy_assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets)
+endif()
 add_dependencies(game copy_assets)
