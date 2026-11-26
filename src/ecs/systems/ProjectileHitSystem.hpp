@@ -4,13 +4,13 @@
 #include <SigmaSix/ecs/systems/CollisionSystem.hpp>
 
 struct ProjectileHitSystem : System {
-    explicit ProjectileHitSystem(CollisionSystem& collisions)
+    explicit ProjectileHitSystem(std::shared_ptr<CollisionSystem> collisions)
         : m_collisions(collisions) {}
 
     void fixedUpdate(Registry& r, float) override {
         std::vector<Entity> projectilesToDestroy;
 
-        for (const CollisionEvent& event : m_collisions.events()) {
+        for (const CollisionEvent& event : m_collisions->events()) {
             if (!event.began) continue;
 
             Entity projectile = NULL_ENTITY;
@@ -35,5 +35,5 @@ struct ProjectileHitSystem : System {
     }
 
 private:
-    CollisionSystem& m_collisions;
+    std::shared_ptr<CollisionSystem> m_collisions;
 };

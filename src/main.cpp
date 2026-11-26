@@ -18,13 +18,13 @@ int main() {
     std::vector<std::unique_ptr<System>> systems;
     auto pc = std::make_unique<PlayerControlSystem>();
     PlayerControlSystem* playerControl = pc.get();
-    auto collisions = std::make_unique<CollisionSystem>();
-    CollisionSystem* collisionEvents = collisions.get();
+    auto collisions = std::make_shared<CollisionSystem>();
+    //CollisionSystem* collisionEvents = collisions.get();
     systems.push_back(std::move(pc));
     systems.push_back(std::make_unique<ProjectileSystem>());
     systems.push_back(std::make_unique<PhysicsSystem>(*collisions));
     systems.push_back(std::move(collisions));
-    systems.push_back(std::make_unique<ProjectileHitSystem>(*collisionEvents));
+    systems.push_back(std::make_unique<ProjectileHitSystem>(std::shared_ptr<CollisionSystem>(collisions)));
     systems.push_back(std::make_unique<FollowSystem>());
     systems.push_back(std::make_unique<RenderSystem>());
 
