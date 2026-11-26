@@ -30,7 +30,7 @@ public:
     {
         yaml::Node doc;
         ok = yaml::loadFile(path, doc, &error);
-        if (!ok) TraceLog(LOG_WARNING, "Config: %s", doc.error.c_str());
+        if (!ok) TraceLog(LOG_WARNING, "Config: %s", error.c_str());
         
         const yaml::Node& w = doc["Window"];
         data.window.width  = static_cast<int>(w["Width"].asInt(data.window.width));
