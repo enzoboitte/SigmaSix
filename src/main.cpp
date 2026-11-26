@@ -17,31 +17,44 @@ int main() {
 
     std::vector<std::unique_ptr<System>> systems;
     auto pc = std::make_unique<PlayerControlSystem>();
-    systems.push_back(std::make_unique<PhysicsSystem>());
+    PlayerControlSystem* playerControl = pc.get();
+    auto collisions = std::make_unique<CollisionSystem>();
+    CollisionSystem* collisionEvents = collisions.get();
+    systems.push_back(std::move(pc));
+    systems.push_back(std::make_unique<ProjectileSystem>());
+    systems.push_back(std::make_unique<PhysicsSystem>(*collisions));
+    systems.push_back(std::move(collisions));
+    systems.push_back(std::make_unique<ProjectileHitSystem>(*collisionEvents));
     systems.push_back(std::make_unique<FollowSystem>());
     systems.push_back(std::make_unique<RenderSystem>());
-    systems.push_back(std::make_unique<ProjectileSystem>());
 
     auto camera = std::make_shared<SceneCamera>();
     const float step = 1.f / 50.f;
     float acc = 0;
-    pc->camera = camera;
-    systems.push_back(std::move(pc));
+    playerControl->camera = camera;
     
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
-        if (dt > 0.25f) dt = 0.25f;
-        for (acc += dt; acc >= step; acc -= step)
-            for (auto& s : systems) s->fixedUpdate(reg, step);
-        for (auto& s : systems) s->update(reg, dt);
-        if (reg.has<Transform2D>(cam)) camera->lookAt(reg.get<Transform2D>(cam).x, reg.get<Transform2D>(cam).y);
+        if (dt > 0.25f) 
+            dt = 0.25f;
+
+        for (acc += dt; acc >= step; acc -= step) {
+            for (auto& s : systems) 
+                s->fixedUpdate(reg, step);
+        }
+
+        for (auto& s : systems) 
+            s->update(reg, dt);
+            
+        if (reg.has<Transform2D>(cam)) 
+            camera->lookAt(reg.get<Transform2D>(cam).x, reg.get<Transform2D>(cam).y);
 
         BeginDrawing();
-        ClearBackground(Color{30, 30, 40, 255});
-        camera->begin();
-        for (auto& s : systems) s->draw(reg);
-        camera->end();
+            ClearBackground(Color{30, 30, 40, 255});
+            camera->begin();
+                for (auto& s : systems) s->draw(reg);
+            camera->end();
         EndDrawing();
     }
     CloseWindow();

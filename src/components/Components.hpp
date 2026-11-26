@@ -11,5 +11,5 @@ struct Rigidbody     { float vx = 0, vy = 0, mass = 1.f, gravityScale = 0.f, dra
 struct Collider      { float w = 32, h = 32, offsetX = 0, offsetY = 0; bool isTrigger = false; };
 struct PlayerControl { float speed = 200.f; };
 struct FollowTarget  { Entity target = NULL_ENTITY; float smoothing = 0.f; };  // 0 = collé
-struct Projectile    { float speed = 400.f; float life = 2.f; };
+struct Projectile    { float speed = 400.f; float life = 2.f; Entity owner = NULL_ENTITY; };
 struct ShaderComponent { std::string name; std::map<std::string, float> uniforms; };

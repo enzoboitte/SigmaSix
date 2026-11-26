@@ -7,18 +7,20 @@
 // Déplacement du joueur (flèches / ZQSD) -> vitesse du Rigidbody.
 struct ProjectileSystem : System 
 {
-    void fixedUpdate(Registry& r, float dt) override 
+    void fixedUpdate(Registry& r, float dt) override
     {
         std::vector<Entity> dead;
         r.each<Projectile>([&](Entity e, Projectile& p)
         {
             if (!r.has<Transform2D>(e)) return;
-            
-            // move project with speed and angle
+
             auto& tr = r.get<Transform2D>(e);
             float a  = tr.angle * DEG2RAD;
-            tr.x    += (cosf(a) * p.speed * dt);
-            tr.y    += (sinf(a) * p.speed * dt);
+            if (r.has<Rigidbody>(e)) {
+                auto& rb = r.get<Rigidbody>(e);
+                rb.vx = cosf(a) * p.speed;
+                rb.vy = sinf(a) * p.speed;
+            }
             p.life  -= dt;
             if (p.life <= 0) dead.push_back(e);
             

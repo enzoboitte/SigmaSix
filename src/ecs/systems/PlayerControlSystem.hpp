@@ -4,7 +4,7 @@
 #include <SigmaSix/core/System.hpp>
 #include <SigmaSix/scene/Camera.hpp>
 #include <SigmaSix/components/Components.hpp>
-#include <cstddef>
+#include <SigmaSix/prefabs/Prefabs.hpp>
 #include <memory>
 
 // Déplacement du joueur (flèches / ZQSD) -> vitesse du Rigidbody.
@@ -31,10 +31,9 @@ struct PlayerControlSystem : System
             {
                 // spawn projectile
                 auto& src = r.get<Transform2D>(e);
-                Entity p  = r.create();
+                Entity p  = makeProjectile(r, src.x, src.y, 8, 8, YELLOW);
                 r.add<Transform2D>(p, Transform2D{src.x, src.y, src.angle, 0});
-                r.add<Sprite>(p, Sprite{YELLOW, 8, 8});
-                r.add<Projectile>(p);
+                r.add<Projectile>(p, Projectile{400.f, 2.f, e});
             }
         });
     }
