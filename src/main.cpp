@@ -77,8 +77,8 @@ int main() {
             camera->begin();
                 for (auto& s : systems) s->draw(reg);
             camera->end();
-            wallShadow.draw(reg);
-            fogOfWar.draw(reg);
+
+            for (auto& s : systems_shaders) s->draw(reg);
         EndDrawing();
     }
     CloseWindow();
