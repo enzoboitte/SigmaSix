@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SigmaSix UI Editor</title>
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+  <header class="toolbar">
+    <strong class="brand">SigmaSix · UI</strong>
+    <button data-cmd="new">Nouveau</button>
+    <label class="btn">Ouvrir<input type="file" id="open" accept=".yml,.yaml" hidden></label>
+    <button data-cmd="save">Enregistrer .yml</button>
+    <button data-cmd="styles">Exporter styles.yml</button>
+    <span class="sep"></span>
+    <button data-cmd="undo" title="Ctrl+Z">Annuler</button>
+    <button data-cmd="duplicate" title="Ctrl+D">Dupliquer</button>
+    <button data-cmd="delete" title="Suppr">Supprimer</button>
+    <span class="sep"></span>
+    <label>Écran <input id="sw" type="number" min="1"> × <input id="sh" type="number" min="1"></label>
+    <label>Échelle <select id="scale"><option>None</option><option>Fit</option><option>Expand</option></select></label>
+    <label>Grille <input id="grid" type="number" min="1" value="10"></label>
+    <label title="Dossier du .yml relatif à l'éditeur, pour prévisualiser les images">Assets <input id="base" type="text" value="../../assets/ui/" size="14"></label>
+    <label>Zoom <input id="zoom" type="range" min="0.25" max="2" step="0.05" value="1"></label>
+  </header>
+
+  <main class="layout">
+    <aside class="panel left">
+      <h3>Éléments</h3>
+      <div id="palette" class="palette"></div>
+      <h3>Hiérarchie</h3>
+      <ul id="tree" class="tree"></ul>
+    </aside>
+
+    <section class="stage-wrap" id="stageWrap">
+      <div id="stage" class="stage"></div>
+    </section>
+
+    <aside class="panel right">
+      <h3>Propriétés</h3>
+      <form id="props" class="props" autocomplete="off"></form>
+      <h3>Styles</h3>
+      <div class="style-bar">
+        <select id="styleList"></select>
+        <button data-cmd="addStyle">+</button>
+        <button data-cmd="delStyle">−</button>
+      </div>
+      <form id="styleProps" class="props" autocomplete="off"></form>
+      <h3>YAML <button data-cmd="applyYaml" class="small">Appliquer</button></h3>
+      <textarea id="yaml" spellcheck="false"></textarea>
+      <p id="status" class="status"></p>
+    </aside>
+  </main>
+
+  <script src="js/yaml.js"></script>
+  <script src="js/model.js"></script>
+  <script src="js/editor.js"></script>
+</body>
+</html>
