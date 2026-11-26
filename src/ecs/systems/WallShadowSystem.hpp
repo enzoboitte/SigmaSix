@@ -8,7 +8,7 @@
 
 static constexpr int MAX_WALLS = 64;
 
-struct WallShadowSystem {
+struct WallShadowSystem : System {
     WallShadowSystem(Entity player, std::shared_ptr<SceneCamera> camera)
         : m_player(player),
           m_camera(std::move(camera)),

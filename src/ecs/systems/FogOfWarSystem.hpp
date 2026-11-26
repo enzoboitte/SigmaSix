@@ -6,7 +6,7 @@
 #include <SigmaSix/scene/Camera.hpp>
 #include <SigmaSix/ecs/systems/InterpolationSystem.hpp>
 
-struct FogOfWarSystem {
+struct FogOfWarSystem : System {
     FogOfWarSystem(Entity player, std::shared_ptr<SceneCamera> camera)
         : m_player(player),
           m_camera(std::move(camera)),

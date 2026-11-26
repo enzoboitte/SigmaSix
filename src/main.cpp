@@ -16,6 +16,9 @@ int main() {
     Entity cam = makeCamera(reg, 400, 300, player);
 
     std::vector<std::shared_ptr<System>> systems;
+    std::vector<std::shared_ptr<System>> systems_shaders;
+
+    // Core systems
     auto pc = std::make_shared<PlayerControlSystem>();
     PlayerControlSystem* playerControl = pc.get();
     auto collisions = std::make_shared<CollisionSystem>();
@@ -30,12 +33,13 @@ int main() {
     systems.push_back(std::make_shared<RenderSystem>());
 
     auto camera = std::make_shared<SceneCamera>();
-    FogOfWarSystem fogOfWar(player, camera);
-    const float step = 1.f / 50.f;
-    float acc = 0;
 
-    WallShadowSystem wallShadow(player, camera);
+    // Shader-based systems
+    systems_shaders.push_back(std::make_shared<FogOfWarSystem>(player, camera));
+    systems_shaders.push_back(std::make_shared<WallShadowSystem>(player, camera));
 
+    const float step      = 1.f / 50.f;
+    float       acc       = 0;
     playerControl->camera = camera;
 
     while (!WindowShouldClose()) {
@@ -51,6 +55,8 @@ int main() {
 
         for (auto& s : systems) 
             s->update(reg, dt);
+        for (auto& s : systems_shaders)
+            s->update(reg, dt);
             
         if (reg.has<Transform2D>(cam)) 
             camera->lookAt(reg.get<Transform2D>(cam).x, reg.get<Transform2D>(cam).y);
@@ -60,8 +66,8 @@ int main() {
             camera->begin();
                 for (auto& s : systems) s->draw(reg);
             camera->end();
-            wallShadow.draw(reg);
-            fogOfWar.draw(reg);
+
+            for (auto& s : systems_shaders) s->draw(reg);
         EndDrawing();
     }
     CloseWindow();

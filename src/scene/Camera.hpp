@@ -1,10 +1,8 @@
 #pragma once
 #include <raylib.h>
+#include <cstdlib>
 
 // Caméra de scène basée sur Camera3D.
-// Repère monde : x vers la droite, y vers le BAS (comme en 2D), z = couche (plus grand = devant).
-// Mode orthographique (par défaut) : rendu 2D en pixels, mais la profondeur Z est gérée par le GPU.
-// Mode perspective : vraie 3D, les objets avec un z différent ont de la parallaxe.
 class SceneCamera {
 public:
     float x = 0, y = 0;        // point regardé (monde)
@@ -30,6 +28,9 @@ public:
     // Appeler à la place de BeginMode2D.
     void begin() {
         const Camera3D cam = camera3D();
+
+        // Applique le shake à la position de la caméra
+
         BeginMode3D(cam);
     }
 
@@ -47,4 +48,16 @@ public:
 
     // Couche z -> profondeur GPU (plus grand z = plus proche de la caméra).
     static float depth(float layer) { return -layer; }
+
+    void addShake(float intensity) {
+        int shakeX = (int)(((float)rand() / RAND_MAX - 0.5f) * intensity);
+        int shakeY = (int)(((float)rand() / RAND_MAX - 0.5f) * intensity);
+        // Déplace la caméra de manière aléatoire autour du point regardé
+        this->shakeX = shakeX;
+        this->shakeY = shakeY;
+    }
+
+private:
+    float shakeX = 0;
+    float shakeY = 0;
 };
