@@ -77,6 +77,7 @@ private:
     std::unordered_map<std::string, Handler> m_handlers;
     std::set<std::string> m_fired;
     std::vector<Element*> m_late;
+    const Element* m_hit = nullptr; // seul élément interactif sous la souris (le plus haut)
 };
 
 }

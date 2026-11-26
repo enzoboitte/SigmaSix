@@ -1,47 +1,80 @@
-# pause_menu.yml
 Screen:
   Size: [800, 600]
   Scale: Fit
-
-Window:
-  Title: "PAUSE"
-  Anchor: Center
-  Size: [320, 280]
-  Closable: false
-
-  Children:
-    - Type: Label
-      Text: "SIGMASIX"
-      Anchor: Top
-      Position: [0, 40]
-      Style: "Header"
-
-    - Type: Button
-      Text: "REPRENDRE"
-      Anchor: Top
-      Position: [0, 100]
-      Size: [200, 36]
-      Action: "Resume"
-
-    - Type: Slider
-      Id: "volume"
-      Text: "Volume"
-      Anchor: Top
-      Position: [20, 150]
-      Size: [160, 20]
-      Value: 80
-      ShowValue: true
-      Action: "VolumeChanged"
-
-    - Type: Button
-      Text: "QUITTER"
-      Anchor: Top
-      Position: [0, 190]
-      Size: [200, 36]
-      Action: "Quit"
-
-    - Type: Label
-      Text: "v1.0.0"
-      Anchor: BottomRight
-      Position: [-8, -4]
-      Style: "Footer"
+Theme:
+  Label:
+    TextColor: "#feffff"
+    BorderWidth: 0
+    TextSize: 21
+    Align: Center
+  Default:
+    TextSize: 16
+    BorderWidth: 2
+    Radius: 0
+    BorderColor: "#594c29"
+    BaseColor: "#181715"
+    TextColor: "#9a7a25"
+    BorderColorFocused: "#9a7a25"
+    BaseColorFocused: "#1f1e1d"
+    TextColorFocused: "#c49943"
+    BorderColorPressed: "#c49943"
+    BaseColorPressed: "#39311a"
+    TextColorPressed: "#ffffff"
+    BackgroundColor: "#181716"
+    LineColor: "#594c29"
+    TextSpacing: 1
+    BorderColorDisabled: "#302b27"
+    BaseColorDisabled: "#141312"
+    TextColorDisabled: "#463c20"
+  Button:
+    Radius: 8
+  Slider:
+    BorderWidth: 1
+    BaseColorPressed: "#ac8435"
+    BaseColor: "#110f0b"
+    BaseColorFocused: "#16130e"
+  ProgressBar:
+    BaseColor: "#110f0b"
+    BaseColorPressed: "#ac8435"
+  CheckBox:
+    BaseColor: "#352e1c"
+    BorderColor: "#594c29"
+  TextBox:
+    BaseColor: "#121110"
+    BaseColorFocused: "#121110"
+    BaseColorPressed: "#121110"
+    TextColor: "#c49943"
+  ValueBox:
+    BaseColor: "#121110"
+    BaseColorPressed: "#121110"
+    TextColor: "#c49943"
+  StatusBar:
+    BaseColor: "#121110"
+    TextColor: "#9a7a25"
+Styles:
+  Header:
+    TextSize: 28
+    TextColor: "#ffffff"
+  Footer:
+    TextSize: 10
+    TextColor: "#594c29"
+  Gold:
+    TextColor: "#c49943"
+Elements:
+  - Type: Button
+    Text: QUITTER
+    Anchor: Top
+    Position: [0, 340]
+    Size: [200, 36]
+    Action: Quit
+  - Type: Button
+    Text: REPRENDRE
+    Anchor: Top
+    Position: [0, 280]
+    Size: [200, 36]
+    Action: Resume
+  - Type: Image
+    Position: [0, -90]
+    Size: [260, 62]
+    Image: ../tds-modern-gui-pixel-art/PNG/Pause menu/Pause.png
+    Anchor: Center

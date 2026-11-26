@@ -5,13 +5,21 @@
 #include <SigmaSix/ecs/systems/Systems.hpp>
 #include <SigmaSix/prefabs/Prefabs.hpp>
 #include <SigmaUi/Ui.hpp>
+#include <SigmaSix/core/ConfigFile.hpp>
 
-int main() {
-    InitWindow(800, 600, "Sigmasix");
-    SetTargetFPS(60);
+int main() 
+{
+    const ConfigFile config("assets/config.yml");
+    const SigmaConfig& cfg = config.data;
+
+    InitWindow(cfg.window.width, cfg.window.height, cfg.window.title.c_str());
+    SetTargetFPS(cfg.window.fps);
+    InitAudioDevice();
+    SetMasterVolume(cfg.audio.volume / 100.f);
 
     ui::loadStyles("assets/ui/styles.yml");
     ui::Screen pause("assets/ui/pause_menu.yml");
+    pause.setValue("volume", static_cast<float>(cfg.audio.volume));
     pause.visible = false;
     bool quit = false;
     pause.on("Resume", [&](ui::Element&) { pause.visible = false; })
@@ -85,5 +93,6 @@ int main() {
             
         EndDrawing();
     }
+    CloseAudioDevice();
     CloseWindow();
 }

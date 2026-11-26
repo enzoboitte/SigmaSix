@@ -30,18 +30,25 @@ Screen:                # optionnel : résolution de référence
   Scale: Fit           # None | Fit (letterbox) | Expand
 Styles:                # optionnel : sinon ui::loadStyles()
   Tactical: {TextSize: 16, BaseColor: "#1e2a1e", BorderColor: "#6b8f3a", TextColor: "#d8e8c0", BackgroundColor: "#141c14"}
-Window:                # chaque clé racine = un élément (Type = la clé, ou "Type:")
-  Title: "SigmaSix"
-  Anchor: Center
-  Size: [400, 300]
-  Style: "Tactical"
-  Children:
-    - Type: Button
-      Text: "CAMPAIGN"
-      Position: [120, 120]
-      Size: [160, 40]
-      Action: "StartCampaign"
+Elements:              # éléments posés directement sur l'écran (aucune fenêtre obligatoire)
+  - Type: Image
+    Image: "../tds-modern-gui-pixel-art/PNG/HUD/MONEY PANEL/Money Panel HUD.png"
+    Anchor: TopRight
+    Position: [-10, 10]
+  - Type: Window
+    Title: "SigmaSix"
+    Anchor: Center
+    Size: [400, 300]
+    Style: "Tactical"
+    Children:
+      - Type: Button
+        Text: "CAMPAIGN"
+        Position: [120, 120]
+        Size: [160, 40]
+        Action: "StartCampaign"
 ```
+
+Ancien format toujours lu : une clé racine par élément (`Window:`, ou `MonNom: {Type: Image, ...}`).
 
 | Clé | Rôle |
 |---|---|

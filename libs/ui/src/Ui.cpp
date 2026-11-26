@@ -139,6 +139,21 @@ private:
     std::vector<std::tuple<int, int, int>> m_saved;
 };
 
+// Éléments qui captent la souris et masquent ce qui est dessous ; textes, images et cadres décoratifs la laissent passer.
+bool blocksMouse(const Element& e)
+{
+    static const std::set<std::string> passThrough = {"Container", "GroupBox", "Line", "Label", "Image", "StatusBar", "ProgressBar"};
+    return !passThrough.count(e.type);
+}
+
+// Dernier élément dessiné sous la souris = celui du dessus (les Dropdown sont dessinés en dernier, d'où la 2e passe).
+void hitTest(const Element& e, Vector2 mouse, bool dropdowns, const Element*& hit)
+{
+    if (!e.visible) return;
+    if ((e.type == "Dropdown") == dropdowns && blocksMouse(e) && CheckCollisionPointRec(mouse, e.bounds)) hit = &e;
+    for (const auto& c : e.children) hitTest(c, mouse, dropdowns, hit);
+}
+
 std::string join(const std::vector<std::string>& items)
 {
     std::string out;
@@ -192,6 +207,8 @@ bool Screen::load(const std::string& path, std::string* error)
     const auto slash = path.find_last_of("/\\");
     m_dir = slash == std::string::npos ? "" : path.substr(0, slash + 1);
     root = Element{};
+    m_hit = nullptr;
+    m_late.clear();
     root.type = "Container";
 
     for (std::size_t i = 0; i < doc.size() && doc.isMap(); ++i) {
@@ -203,6 +220,8 @@ bool Screen::load(const std::string& path, std::string* error)
             m_reference = vec2(node["Size"], {0, 0});
             const std::string mode = node["Scale"].asString();
             m_scaleMode = mode == "Fit" ? 1 : mode == "Expand" ? 2 : 0;
+        } else if (key == "Elements") {
+            for (const yaml::Node& child : node.items()) parseElement(child, root.children.emplace_back(), "");
         } else {
             parseElement(node, root.children.emplace_back(), key);
         }
@@ -303,12 +322,22 @@ void Screen::draw()
     GuiEnableTooltip();
     if (dropdownOpen) GuiLock();
     layout(root, area, scale);
+    // Figé tant que le bouton est enfoncé : un glissement (slider...) ne passe pas à l'élément survolé.
+    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+        m_hit = nullptr;
+        hitTest(root, GetMousePosition(), false, m_hit);
+        hitTest(root, GetMousePosition(), true, m_hit);
+    }
     drawElement(root, scale);
     if (dropdownOpen) GuiUnlock();
     for (Element* e : m_late) {
         StyleScope style(*e, scale);
         int active = static_cast<int>(e->value);
-        if (GuiDropdownBox(e->bounds, join(e->items).c_str(), &active, e->edit)) {
+        const bool covered = m_hit != e && !e->edit && !GuiIsLocked() && CheckCollisionPointRec(GetMousePosition(), e->bounds);
+        if (covered) GuiLock();
+        const bool toggled = GuiDropdownBox(e->bounds, join(e->items).c_str(), &active, e->edit);
+        if (covered) GuiUnlock();
+        if (toggled) {
             e->edit = !e->edit;
             if (!e->edit && active != static_cast<int>(e->value)) {
                 e->value = static_cast<float>(active);
@@ -348,6 +377,9 @@ void Screen::drawElement(Element& e, float scale)
         const Rectangle& b = e.bounds;
         const char* text = e.text.empty() ? nullptr : e.text.c_str();
         const std::string& t = e.type;
+        // Recouvert par un élément au-dessus : dessiné normalement mais sans survol ni clic.
+        const bool covered = m_hit != &e && !e.edit && !GuiIsLocked() && CheckCollisionPointRec(GetMousePosition(), b);
+        if (covered) GuiLock();
         float v = e.value;
         int iv = static_cast<int>(v);
         bool bv = v != 0;
@@ -411,6 +443,7 @@ void Screen::drawElement(Element& e, float scale)
             e.value = nv;
             fire(e);
         }
+        if (covered) GuiUnlock();
         for (auto& c : e.children) drawElement(c, scale);
     }
     GuiSetState(prevState);
