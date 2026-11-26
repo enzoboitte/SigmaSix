@@ -6,15 +6,16 @@
 #include <variant>
 
 // Composants = données pures, sans logique.
-struct Transform2D     { float x = 0, y = 0, angle = 0; int z = 0; };
-struct PreviousTransform2D { float x = 0, y = 0; };            // position au pas physique précédent
-struct RenderTransform2D   { float x = 0, y = 0, angle = 0; }; // position interpolée pour l'affichage
-struct Sprite        { Color color = WHITE; float w = 32, h = 32; };
-struct Rigidbody     { float vx = 0, vy = 0, mass = 1.f, gravityScale = 0.f, drag = 0.f; bool isKinematic = false; };
-struct Collider      { float w = 32, h = 32, offsetX = 0, offsetY = 0; bool isTrigger = false; };
-struct PlayerControl { float speed = 200.f; };
-struct FollowTarget  { Entity target = NULL_ENTITY; float smoothing = 0.f; };  // 0 = collé
-struct Projectile    { float speed = 400.f; float life = 2.f; Entity owner = NULL_ENTITY; };
-struct FogOfWar      { float visibilityRadius = 150.f; float feather = 30.f; Vector4 color{0.f, 0.f, 0.f, 0.9f}; };
+struct Transform2D          { float x = 0, y = 0, angle = 0; int z = 0; };
+struct PreviousTransform2D  { float x = 0, y = 0; };            // position au pas physique précédent
+struct RenderTransform2D    { float x = 0, y = 0, angle = 0; }; // position interpolée pour l'affichage
+struct Sprite               { Color color = WHITE; float w = 32, h = 32; };
+struct Rigidbody            { float vx = 0, vy = 0, mass = 1.f, gravityScale = 0.f, drag = 0.f; bool isKinematic = false; };
+struct Collider             { float w = 32, h = 32, offsetX = 0, offsetY = 0; bool isTrigger = false; };
+struct PlayerControl        { float speed = 200.f; };
+struct FollowTarget         { Entity target = NULL_ENTITY; float smoothing = 0.f; };  // 0 = collé
+struct Projectile           { float speed = 400.f; float life = 2.f; Entity owner = NULL_ENTITY; };
+struct FogOfWar             { float visibilityRadius = 250.f; float feather = 70.f; Vector4 color{0.f, 0.f, 0.f, 0.9f}; };
 using ShaderUniform = std::variant<float, Vector2, Vector4>;
-struct ShaderComponent { std::string name; std::map<std::string, ShaderUniform> uniforms; };
+struct ShaderComponent      { std::string name; std::map<std::string, ShaderUniform> uniforms; };
+struct Wall                 {};

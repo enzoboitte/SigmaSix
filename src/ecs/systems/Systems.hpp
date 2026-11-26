@@ -8,3 +8,4 @@
 #include <SigmaSix/ecs/systems/FollowSystem.hpp>
 #include <SigmaSix/ecs/systems/RenderSystem.hpp>
 #include <SigmaSix/ecs/systems/ProjectileSystem.hpp>
+#include <SigmaSix/ecs/systems/WallShadowSystem.hpp>

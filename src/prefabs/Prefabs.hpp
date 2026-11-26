@@ -28,6 +28,7 @@ inline Entity makeEnemy(Registry& r, float x, float y)
 inline Entity makeWall(Registry& r, float x, float y, float w, float h) {
     Entity e = makeBody(r, x, y, w, h, GRAY);
     r.get<Rigidbody>(e).isKinematic = true;
+    r.add<Wall>(e);
     return e;
 }
 inline Entity makeCamera(Registry& r, float x, float y, Entity target) {

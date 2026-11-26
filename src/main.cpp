@@ -33,8 +33,10 @@ int main() {
     FogOfWarSystem fogOfWar(player, camera);
     const float step = 1.f / 50.f;
     float acc = 0;
+
+    WallShadowSystem wallShadow(player, camera);
+
     playerControl->camera = camera;
-    
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
@@ -58,6 +60,7 @@ int main() {
             camera->begin();
                 for (auto& s : systems) s->draw(reg);
             camera->end();
+            wallShadow.draw(reg);
             fogOfWar.draw(reg);
         EndDrawing();
     }
