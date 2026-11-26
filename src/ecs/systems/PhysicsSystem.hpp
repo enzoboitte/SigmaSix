@@ -2,6 +2,7 @@
 #include <box2d/box2d.h>
 #include <cmath>
 #include <unordered_map>
+#include <utility>
 #include <SigmaSix/core/System.hpp>
 #include <SigmaSix/components/Components.hpp>
 #include <SigmaSix/ecs/systems/CollisionSystem.hpp>
@@ -9,10 +10,11 @@
 struct PhysicsSystem : System {
     static constexpr float pixelsPerMeter = 100.f;
 
-    explicit PhysicsSystem(CollisionSystem& collisions)
-        : m_world(b2Vec2(0.f, 9.8f))
+    explicit PhysicsSystem(std::shared_ptr<CollisionSystem> collisions)
+        : m_collisions(std::move(collisions)),
+          m_world(b2Vec2(0.f, 9.8f))
     {
-        m_world.SetContactListener(&collisions);
+        m_world.SetContactListener(m_collisions.get());
     }
 
     void fixedUpdate(Registry& r, float dt) override {
@@ -65,11 +67,15 @@ struct PhysicsSystem : System {
             }
             body->CreateFixture(&fixtureDef);
             m_bodies.emplace(e, body);
+            r.add<PreviousTransform2D>(e, PreviousTransform2D{transform.x, transform.y});
         });
 
         for (const auto& [e, body] : m_bodies) {
             if (r.has<Transform2D>(e)) {
-                const float angle = r.get<Transform2D>(e).angle * DEG2RAD;
+                const auto& t = r.get<Transform2D>(e);
+                r.add<PreviousTransform2D>(e, PreviousTransform2D{t.x, t.y});
+
+                const float angle = t.angle * DEG2RAD;
                 if (std::abs(body->GetAngle() - angle) > 1e-5f) {
                     body->SetTransform(body->GetPosition(), angle);
                 }
@@ -105,6 +111,7 @@ struct PhysicsSystem : System {
     }
 
 private:
+    std::shared_ptr<CollisionSystem> m_collisions;
     b2World m_world;
     std::unordered_map<Entity, b2Body*> m_bodies;
 };

@@ -41,6 +41,7 @@ target_include_directories(game PRIVATE ${SIGMASIX_INC})
 target_link_libraries(game PRIVATE box2d raylib)
 
 # Assets copiés à côté de l'exécutable (évite les liens symboliques, interdits sans privilège sous Windows)
-add_custom_command(TARGET game POST_BUILD
+add_custom_target(copy_assets ALL
   COMMAND ${CMAKE_COMMAND} -E copy_directory
-          ${CMAKE_SOURCE_DIR}/assets/shaders $<TARGET_FILE_DIR:game>/assets/shaders)
+          ${CMAKE_SOURCE_DIR}/assets/shaders ${CMAKE_BINARY_DIR}/assets/shaders)
+add_dependencies(game copy_assets)

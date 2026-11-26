@@ -16,8 +16,7 @@ public:
 
     void lookAt(float px, float py) { x = px; y = py; }
 
-    // Appeler à la place de BeginMode2D.
-    void begin() {
+    Camera3D camera3D() const {
         Camera3D cam{};
         // caméra derrière le plan (z négatif) et regardant +Z, up = -Y => x droite, y bas
         cam.position = Vector3{x, y, -z - distance};
@@ -25,9 +24,20 @@ public:
         cam.up = Vector3{0, -1, 0};
         cam.projection = perspective ? CAMERA_PERSPECTIVE : CAMERA_ORTHOGRAPHIC;
         cam.fovy = perspective ? fov : (float)GetScreenHeight() / zoom;
+        return cam;
+    }
+
+    // Appeler à la place de BeginMode2D.
+    void begin() {
+        const Camera3D cam = camera3D();
         BeginMode3D(cam);
     }
+
     void end() { EndMode3D(); }
+
+    Vector2 worldToScreen(Vector3 position) const {
+        return GetWorldToScreen(position, camera3D());
+    }
 
     // Convertit une position écran en monde sur la couche `layer` (ortho uniquement).
     Vector2 screenToWorld(Vector2 s) const {

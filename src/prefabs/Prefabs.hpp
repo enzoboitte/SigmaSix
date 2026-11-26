@@ -15,6 +15,7 @@ inline Entity makePlayer(Registry& r, float x, float y) {
     Entity e = makeBody(r, x, y, 32, 32, GREEN);
     r.add<PlayerControl>(e);
     r.add<ShaderComponent>(e, ShaderComponent{"outline", {{"thickness", 3.f}}});
+    r.add<FogOfWar>(e);
     return e;
 }
 inline Entity makeEnemy(Registry& r, float x, float y) 

@@ -3,6 +3,7 @@
 #include <raymath.h>
 #include <SigmaSix/core/System.hpp>
 #include <SigmaSix/components/Components.hpp>
+#include <SigmaSix/ecs/systems/InterpolationSystem.hpp>
 
 static float minSpeed         = 70;
 static float minEffectLength  = 4;
@@ -18,7 +19,7 @@ struct FollowSystem : System
             if (!r.has<Transform2D>(e) || !r.has<Transform2D>(f.target)) return;
             
             auto& t  = r.get<Transform2D>(e);
-            auto& tt = r.get<Transform2D>(f.target);
+            const Vector2 tt = renderPosition(r, f.target);
             
             Vector2 diff = { tt.x - t.x, tt.y - t.y };
             float length = Vector2Length(diff);

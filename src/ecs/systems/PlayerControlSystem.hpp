@@ -5,12 +5,19 @@
 #include <SigmaSix/scene/Camera.hpp>
 #include <SigmaSix/components/Components.hpp>
 #include <SigmaSix/prefabs/Prefabs.hpp>
+#include <SigmaSix/ecs/systems/InterpolationSystem.hpp>
 #include <memory>
 
 // Déplacement du joueur (flèches / ZQSD) -> vitesse du Rigidbody.
 struct PlayerControlSystem : System 
 {
     std::shared_ptr<SceneCamera> camera = nullptr;
+
+    // Les appuis ponctuels sont lus à chaque frame, puis consommés au pas physique suivant.
+    void update(Registry&, float) override
+    {
+        if (IsKeyPressed(KEY_SPACE)) m_fireRequested = true;
+    }
     
     void fixedUpdate(Registry& r, float) override 
     {   
@@ -27,7 +34,7 @@ struct PlayerControlSystem : System
             Vector2 mouse = camera->screenToWorld(GetMousePosition());
             tr.angle = atan2f(mouse.y - tr.y, mouse.x - tr.x) * RAD2DEG;
             
-            if (IsKeyPressed(KEY_SPACE))
+            if (m_fireRequested)
             {
                 // spawn projectile
                 auto& src = r.get<Transform2D>(e);
@@ -36,6 +43,7 @@ struct PlayerControlSystem : System
                 r.add<Projectile>(p, Projectile{400.f, 2.f, e});
             }
         });
+        m_fireRequested = false;
     }
 
     // Ligne de visée vers la souris (le dessin doit être fait dans draw).
@@ -44,9 +52,12 @@ struct PlayerControlSystem : System
         r.each<PlayerControl>([&](Entity e, PlayerControl&) 
         {
             if (!r.has<Transform2D>(e)) return;
-            auto& tr = r.get<Transform2D>(e);
+            const Vector2 pos = renderPosition(r, e);
             Vector2 mouse = camera->screenToWorld(GetMousePosition());
-            DrawLine((int)tr.x, (int)tr.y, (int)mouse.x, (int)mouse.y, RED);
+            DrawLine((int)pos.x, (int)pos.y, (int)mouse.x, (int)mouse.y, RED);
         });
     }
+
+private:
+    bool m_fireRequested = false;
 };
