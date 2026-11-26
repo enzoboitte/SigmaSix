@@ -56,7 +56,40 @@ Window:                # chaque clé racine = un élément (Type = la clé, ou "
 | `Image`, `Tint` | texture relative au `.yml` (Image, ou Button skinné) |
 | `Tooltip`, `Visible`, `Enabled`, `Closable` | divers |
 
-Styles : `TextSize`, `Align` (Left/Center/Right), `TextColor`, `BaseColor`, `BorderColor`, `BackgroundColor`, `File` (`.rgs` raygui).
+## Thème et styles
+
+`Theme:` règle le design raygui global, par composant ; `Default` s'applique à tous, puis chaque composant le surcharge
+(`Label Button Toggle CheckBox ComboBox Dropdown TextBox ValueBox Slider ProgressBar StatusBar ScrollBar ListView`).
+`Styles:` définit des styles nommés appliqués via `Style:` à un élément (et hérités par les enfants d'un conteneur).
+Le thème est global à raygui : il s'applique au chargement (`ui::loadStyles()` ou `Theme:` dans un écran).
+
+```yaml
+Theme:
+  Default:
+    TextSize: 16
+    BorderWidth: 2
+    Radius: 4                      # bords arrondis, en pixels
+    BorderColor: "#6b8f3a"
+    BaseColor: "#1e2a1e"
+    TextColor: "#d8e8c0"
+    BaseColorFocused: "#2b3c2b"    # survol
+    BorderColorPressed: "#e0c060"  # clic / actif
+    TextColorDisabled: "#556655"   # Enabled: false
+    BackgroundColor: "#141c14"
+    Font: "fonts/terminal.ttf"     # optionnel, relatif au .yml
+  Button:
+    Radius: 8
+```
+
+| Propriété | Effet |
+|---|---|
+| `{Border,Base,Text}Color[Focused\|Pressed\|Disabled]` | couleurs par état (`#rrggbb` ou `#rrggbbaa`) |
+| `BorderWidth`, `Radius` | épaisseur et arrondi des bordures (px) |
+| `TextSize`, `TextPadding`, `TextSpacing`, `Align` | texte (`Align` : Left/Center/Right) |
+| `BackgroundColor`, `LineColor` | fond des panneaux/fenêtres, lignes et GroupBox (global) |
+| `Font`, `File` | police `.ttf`/`.otf`, style raygui `.rgs` (thème uniquement) |
+
+Les arrondis passent par un hook injecté dans une copie de `raygui.h` au configure CMake (sources téléchargées intactes).
 
 Non supporté par le parseur : ancres/alias YAML et scalaires multilignes (`|`, `>`).
 

@@ -9,10 +9,12 @@
 
 namespace ui {
 
+// Style raygui : propriétés (couleurs par état, bordure, padding...) + extensions SigmaUi.
 struct Style {
-    int textSize = 0, align = -1;
-    int textColor = 0, baseColor = 0, borderColor = 0, backgroundColor = 0;
-    std::string file;
+    std::vector<std::pair<int, int>> props;
+    int textSize = 0;
+    float radius = -1;
+    std::string file, font;
 };
 
 struct Element {
@@ -28,8 +30,9 @@ struct Element {
     std::vector<Element> children;
 };
 
-// Charge les styles nommés (clé "Styles:") partagés par tous les écrans.
+// Charge "Styles:" (styles nommés) et "Theme:" (design global raygui par composant).
 bool loadStyles(const std::string& path, std::string* error = nullptr);
+void applyTheme(const yaml::Node& theme, const std::string& dir = {});
 
 class Screen {
 public:
