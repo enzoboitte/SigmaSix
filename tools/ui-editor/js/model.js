@@ -31,6 +31,24 @@ const Model = (() => {
     Image: { Size: [64, 64], Image: '' },
   };
 
+  const PALETTE = {
+    'Conteneurs': ['Window', 'Panel', 'GroupBox', 'Container'],
+    'Texte & image': ['Label', 'Image', 'Line', 'StatusBar'],
+    'Boutons': ['Button', 'LabelButton', 'Toggle', 'ToggleGroup', 'CheckBox'],
+    'Saisie': ['TextBox', 'ValueBox', 'Spinner', 'ComboBox', 'Dropdown'],
+    'Valeurs': ['Slider', 'SliderBar', 'ProgressBar'],
+  };
+
+  // Valeurs raygui par défaut (style "default"), affichées comme héritées dans le thème.
+  const RAYGUI = {
+    TextSize: 10, BorderWidth: 1, Radius: 0, TextPadding: 0, TextSpacing: 1, Align: 'Center',
+    BorderColor: '#838383', BaseColor: '#c9c9c9', TextColor: '#686868',
+    BorderColorFocused: '#5bb2d9', BaseColorFocused: '#c9effe', TextColorFocused: '#6c9bbc',
+    BorderColorPressed: '#0492c7', BaseColorPressed: '#97e8ff', TextColorPressed: '#368baf',
+    BorderColorDisabled: '#b5c1c2', BaseColorDisabled: '#e6e9e9', TextColorDisabled: '#aeb7b8',
+    BackgroundColor: '#f5f5f5', LineColor: '#90abb5',
+  };
+
   const THEME_KEYS = ['Default', 'Label', 'Button', 'Toggle', 'CheckBox', 'ComboBox', 'Dropdown', 'TextBox', 'ValueBox', 'Slider', 'ProgressBar', 'StatusBar'];
   const THEME_ALIAS = { LabelButton: 'Button', ToggleGroup: 'Toggle', Spinner: 'ValueBox', SliderBar: 'Slider' };
   const themeKey = type => THEME_ALIAS[type] || (THEME_KEYS.includes(type) ? type : 'Default');
@@ -55,7 +73,7 @@ const Model = (() => {
     if (NUMBERS.includes(type)) f.push(['Value', 'number'], ['Min', 'number'], ['Max', 'number']);
     if (SLIDERS.includes(type)) f.push(['ShowValue', 'bool']);
     if (type === 'TextBox') f.push(['MaxLength', 'number']);
-    if (type === 'Image' || type === 'Button') f.push(['Image', 'text'], ['Tint', 'color']);
+    if (type === 'Image' || type === 'Button') f.push(['Image', 'image'], ['Tint', 'color']);
     if (ACTIONS.includes(type)) f.push(['Action', 'text']);
     f.push(['Style', 'style'], ['Tooltip', 'text'], ['Visible', 'bool'], ['Enabled', 'bool']);
     return f;
@@ -94,14 +112,26 @@ const Model = (() => {
     return node;
   }
 
+  // Groupe de styles { Nom: {props} } avec les nombres convertis (le parseur YAML rend des chaînes).
+  const NUM_KEYS = ['TextSize', 'Radius', 'BorderWidth', 'TextPadding', 'TextSpacing', 'TextLineSpacing'];
+  const styleGroup = node => Object.fromEntries(Object.entries(node || {}).map(([name, props]) =>
+    [name, Object.fromEntries(Object.entries(props || {}).map(([k, v]) => [k, NUM_KEYS.includes(k) ? num(v) : v]))]));
+
   function importYaml(text) {
     const doc = Yaml.parse(text) || {};
     if (typeof doc !== 'object' || Array.isArray(doc)) throw new Error('la racine doit être une map');
     const state = { screen: { Size: [800, 600], Scale: 'Fit' }, theme: {}, styles: {}, roots: [] };
+    // Ancien styles.yml (lu par ui::loadStyles) : les styles nommés directement à la racine.
+    const known = ['Screen', 'Styles', 'Theme', 'Elements'];
+    if (Object.entries(doc).every(([k, v]) => !known.includes(k) && !TYPES[k] && v && typeof v === 'object' && !v.Type)) {
+      state.styles = styleGroup(doc);
+      return state;
+    }
     for (const [key, node] of Object.entries(doc)) {
       if (key === 'Screen') state.screen = { Size: vec(node?.Size) || [800, 600], Scale: node?.Scale || 'None' };
-      else if (key === 'Styles') state.styles = structuredClone(node || {});
-      else if (key === 'Theme') state.theme = structuredClone(node || {});
+      else if (key === 'Styles') state.styles = styleGroup(node);
+      else if (key === 'Theme') state.theme = styleGroup(node);
+      else if (key === 'Elements') state.roots.push(...(node || []).map(n => fromNode(n || {}, '')));
       else state.roots.push(fromNode(node || {}, key));
     }
     return state;
@@ -112,13 +142,7 @@ const Model = (() => {
     const clean = o => Object.fromEntries(Object.entries(o).filter(([, v]) => v && Object.keys(v).length));
     if (Object.keys(clean(state.theme)).length) doc.Theme = clean(state.theme);
     if (Object.keys(state.styles).length) doc.Styles = state.styles;
-    const used = new Set(['Screen', 'Styles', 'Theme']);
-    for (const el of state.roots) {
-      let key = used.has(el.Type) ? (el.Id || el.Type) : el.Type;
-      for (let i = 2; used.has(key); i++) key = `${el.Type}${i}`;
-      used.add(key);
-      doc[key] = toNode(el, key !== el.Type);
-    }
+    if (state.roots.length) doc.Elements = state.roots.map(el => toNode(el));
     return Yaml.dump(doc);
   }
 
@@ -138,5 +162,5 @@ const Model = (() => {
     return { x: parent.x + parent.w * ax - w * ax + px, y: parent.y + parent.h * ay - h * ay + py, w, h };
   }
 
-  return { ANCHORS, CONTAINERS, SLIDERS, LISTS, TYPES, THEME_KEYS, STYLE_FIELDS, THEME_FIELDS, themeKey, fields, create, importYaml, exportYaml, layout };
+  return { ANCHORS, CONTAINERS, SLIDERS, LISTS, TYPES, PALETTE, RAYGUI, THEME_KEYS, STYLE_FIELDS, THEME_FIELDS, themeKey, fields, create, importYaml, exportYaml, layout };
 })();

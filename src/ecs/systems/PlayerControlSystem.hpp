@@ -42,7 +42,7 @@ struct PlayerControlSystem : System
                 r.add<Transform2D>(p, Transform2D{src.x, src.y, src.angle, 0});
                 r.add<Projectile>(p, Projectile{400.f, 2.f, e});
 
-                camera->addShake(5.f);
+                camera->addShake(.5f);
             }
         });
         m_fireRequested = false;

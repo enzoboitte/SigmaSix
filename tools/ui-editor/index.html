@@ -8,58 +8,107 @@
 </head>
 <body>
   <header class="toolbar">
-    <strong class="brand">SigmaSix · UI</strong>
-    <button data-cmd="new">Nouveau</button>
-    <label class="btn">Ouvrir<input type="file" id="open" accept=".yml,.yaml" hidden></label>
-    <button data-cmd="save">Enregistrer .yml</button>
-    <button data-cmd="styles" title="Thème + styles nommés">Exporter styles.yml</button>
-    <span class="sep"></span>
-    <button data-cmd="undo" title="Ctrl+Z">Annuler</button>
-    <button data-cmd="duplicate" title="Ctrl+D">Dupliquer</button>
-    <button data-cmd="delete" title="Suppr">Supprimer</button>
-    <span class="sep"></span>
-    <label>Écran <input id="sw" type="number" min="1"> × <input id="sh" type="number" min="1"></label>
-    <label>Échelle <select id="scale"><option>None</option><option>Fit</option><option>Expand</option></select></label>
-    <label>Grille <input id="grid" type="number" min="1" value="10"></label>
-    <label title="Dossier du .yml relatif à l'éditeur, pour prévisualiser les images">Assets <input id="base" type="text" value="../../assets/ui/" size="14"></label>
-    <label>Zoom <input id="zoom" type="range" min="0.25" max="2" step="0.05" value="1"></label>
+    <strong class="brand">SigmaSix <span>UI</span></strong>
+    <span id="fileName" class="file" title="Fichier en cours"></span>
+    <nav class="group">
+      <button data-cmd="new">Nouveau</button>
+      <button data-cmd="open" title="Interface .yml, ou styles.yml (fusionné dans l'interface en cours) — Ctrl+O">Ouvrir…</button>
+      <button data-cmd="save" class="primary" title="Ctrl+S">Enregistrer</button>
+      <button data-cmd="saveAs" title="Ctrl+Maj+S">Enregistrer sous…</button>
+      <button data-cmd="styles" title="Thème + styles nommés dans un styles.yml séparé">Exporter les styles</button>
+    </nav>
+    <span class="spacer"></span>
+    <nav class="group">
+      <button data-cmd="undo" title="Annuler — Ctrl+Z">↶ Annuler</button>
+      <button data-cmd="duplicate" title="Dupliquer — Ctrl+D">⧉ Dupliquer</button>
+      <button data-cmd="delete" title="Supprimer — Suppr">✕ Supprimer</button>
+    </nav>
+    <input type="file" id="open" hidden>
   </header>
 
   <main class="layout">
     <aside class="panel left">
-      <h3>Éléments</h3>
-      <div id="palette" class="palette"></div>
-      <h3>Hiérarchie</h3>
-      <ul id="tree" class="tree"></ul>
+      <section class="block add">
+        <div class="block-head">
+          <h3>Ajouter</h3>
+          <nav class="tabs small" data-group="add">
+            <button data-tab="elements" class="on">Éléments</button>
+            <button data-tab="images">Images</button>
+          </nav>
+        </div>
+        <div class="target">dans <strong id="target"></strong> <button data-cmd="toRoot" class="small" title="Ajouter directement sur l'écran, sans fenêtre">Écran</button></div>
+        <div class="tab on" data-group="add" id="tab-elements">
+          <div id="palette"></div>
+          <p class="hint">Clique, ou glisse sur l'écran pour placer.</p>
+        </div>
+        <div class="tab" data-group="add" id="tab-images">
+          <div class="asset-bar">
+            <label class="btn" title="Choisis le dossier assets/ du projet">Choisir le dossier assets…<input type="file" id="assetDir" webkitdirectory multiple hidden></label>
+            <label class="inline" title="Dossier du .yml dans assets/ (les chemins d'image sont relatifs au .yml)">.yml dans <input id="ymlDir" type="text" value="ui/" size="5"></label>
+          </div>
+          <input id="assetFilter" type="search" placeholder="Filtrer les images…" class="full">
+          <div id="assets" class="assets"><p class="hint">Choisis le dossier assets, puis clique ou glisse une image sur l'écran.</p></div>
+          <datalist id="assetList"></datalist>
+        </div>
+      </section>
+      <section class="block layers">
+        <div class="block-head"><h3>Calques</h3><span class="hint">glisser pour déplacer</span></div>
+        <ul id="tree" class="tree"></ul>
+      </section>
     </aside>
 
-    <section class="stage-wrap" id="stageWrap">
-      <div id="stage" class="stage"></div>
+    <section class="center">
+      <div class="stage-wrap" id="stageWrap"><div id="stage" class="stage"></div></div>
+      <footer class="stagebar">
+        <label class="inline">Grille <input id="grid" type="number" min="1" value="10"></label>
+        <span class="spacer"></span>
+        <button data-cmd="zoomOut" title="Zoom arrière">−</button>
+        <input id="zoom" type="range" min="0.25" max="2" step="0.05" value="1">
+        <button data-cmd="zoomIn" title="Zoom avant">+</button>
+        <span id="zoomLabel" class="zoom-label">100%</span>
+        <button data-cmd="zoomFit">Ajuster</button>
+      </footer>
     </section>
 
     <aside class="panel right">
-      <details open>
-        <summary><h3>Propriétés</h3></summary>
-        <form id="props" class="props" autocomplete="off"></form>
-      </details>
-      <details>
-        <summary><h3>Thème raygui</h3></summary>
-        <div class="style-bar"><select id="themeList"></select><button data-cmd="resetTheme" title="Vider ce composant">↺</button></div>
-        <form id="themeProps" class="props" autocomplete="off"></form>
-      </details>
-      <details>
-        <summary><h3>Styles nommés</h3></summary>
+      <nav class="tabs" data-group="right">
+        <button data-tab="props" class="on">Propriétés</button>
+        <button data-tab="theme">Thème</button>
+        <button data-tab="styles">Styles</button>
+        <button data-tab="yaml">YAML</button>
+      </nav>
+      <div class="tab on" data-group="right" id="tab-props">
+        <div id="screenProps">
+          <div class="type-head"><strong>Écran</strong><span class="hint">rien de sélectionné</span></div>
+          <h4>Résolution de référence</h4>
+          <div class="props">
+            <label>Taille</label><div class="row"><input id="sw" type="number" min="1"><input id="sh" type="number" min="1"></div>
+            <label>Échelle</label><select id="scale"><option>None</option><option>Fit</option><option>Expand</option></select>
+          </div>
+          <p class="hint">Fit : garde les proportions (bandes noires). Expand : étend la zone. None : pixels réels.</p>
+        </div>
+        <div id="props"></div>
+      </div>
+      <div class="tab" data-group="right" id="tab-theme">
+        <button data-cmd="importStyles" class="import" title="Fusionne le Theme et les Styles d'un .yml dans l'interface en cours (ou glisse le fichier ici)">Importer un styles.yml…</button>
+        <p class="hint"><b>Default</b> s'applique à tous les composants ; un composant ne surcharge que ce que tu changes. Valeurs en pointillé/grisées = héritées.</p>
+        <div id="themeChips" class="chips"></div>
+        <div id="themeProps"></div>
+      </div>
+      <div class="tab" data-group="right" id="tab-styles">
+        <button data-cmd="importStyles" class="import" title="Fusionne le Theme et les Styles d'un .yml dans l'interface en cours (ou glisse le fichier ici)">Importer un styles.yml…</button>
+        <p class="hint">Style nommé : appliqué via la propriété <b>Style</b> d'un élément (et hérité par ses enfants).</p>
         <div class="style-bar">
           <select id="styleList"></select>
-          <button data-cmd="addStyle">+</button>
-          <button data-cmd="delStyle">−</button>
+          <button data-cmd="addStyle" title="Nouveau style">+</button>
+          <button data-cmd="delStyle" title="Supprimer le style">−</button>
         </div>
-        <form id="styleProps" class="props" autocomplete="off"></form>
-      </details>
-      <details open>
-        <summary><h3>YAML</h3> <button data-cmd="applyYaml" class="small">Appliquer</button></summary>
+        <div id="styleProps"></div>
+      </div>
+      <div class="tab" data-group="right" id="tab-yaml">
+        <button data-cmd="applyYaml">Appliquer le YAML</button>
         <textarea id="yaml" spellcheck="false"></textarea>
-      </details>
+      </div>
       <p id="status" class="status"></p>
     </aside>
   </main>
