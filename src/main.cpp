@@ -7,6 +7,13 @@
 #include <SigmaUi/Ui.hpp>
 #include <SigmaSix/core/ConfigFile.hpp>
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#define NOGDI   // Rectangle…
+#define NOUSER  // CloseWindow, ShowCursor…
+#endif
+#include <nbnet.h>
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 static void drawFrame(Registry& reg, const std::shared_ptr<SceneCamera>& camera,
@@ -16,7 +23,6 @@ static void drawFrame(Registry& reg, const std::shared_ptr<SceneCamera>& camera,
 {
     BeginDrawing();
     ClearBackground(Color{30, 30, 40, 255});
-
     camera->begin();
         for (auto& s : systems) s->draw(reg);
     camera->end();

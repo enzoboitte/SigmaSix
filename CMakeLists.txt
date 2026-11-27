@@ -42,7 +42,7 @@ foreach(header ${SIGMASIX_HEADERS})
          "#pragma once\n#include \"${CMAKE_SOURCE_DIR}/src/${header}\"\n")
   endif()
 endforeach()
-target_include_directories(game PRIVATE ${SIGMASIX_INC})
+target_include_directories(game PRIVATE ${SIGMASIX_INC} libs/nbnet)
 target_link_libraries(game PRIVATE box2d raylib SigmaUi)
 
 # Assets copiés à côté de l'exécutable, les .yml sont chiffrés au passage (sauf SIGMASIX_ENCRYPT_ASSETS=OFF)
