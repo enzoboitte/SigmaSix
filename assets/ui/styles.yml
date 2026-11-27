@@ -1,31 +1,16 @@
-# Thème global raygui, par composant ("Default" s'applique à tous)
-Theme:
-  Default:
-    TextSize: 16
-    BorderWidth: 2
-    Radius: 4
-    BorderColor: "#6b8f3a"
-    BaseColor: "#1e2a1e"
-    TextColor: "#d8e8c0"
-    BorderColorFocused: "#a6d65c"
-    BaseColorFocused: "#2b3c2b"
-    TextColorFocused: "#ffffff"
-    BorderColorPressed: "#e0c060"
-    BaseColorPressed: "#3a4a2a"
-    TextColorPressed: "#e0c060"
-    BackgroundColor: "#141c14"
-    LineColor: "#6b8f3a"
-  Button:
-    Radius: 8
-  Slider:
-    BorderWidth: 1
-    BaseColorPressed: "#a6d65c"
-
-# Styles nommés, référencés par la clé "Style" des éléments
 Styles:
+  Tactical:
+    TextSize: 16
+    BaseColor: "#1e2a1e"
+    BorderColor: "#6b8f3a"
+    TextColor: "#d8e8c0"
+    BackgroundColor: "#141c14"
+    BorderWidth: 0
+    Radius: 0
   Header:
     TextSize: 28
     TextColor: "#e0c060"
+    BorderWidth: 0
   Footer:
     TextSize: 10
     TextColor: "#8a9a80"
