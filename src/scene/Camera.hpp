@@ -65,9 +65,14 @@ public:
     }
 
     // Couche z -> profondeur GPU (plus grand z = plus proche de la caméra).
-    static float depth(float layer) { return -layer; }
+    static float depth(float layer) 
+    { return -layer; }
 
-    void addShake(float intensity) {
+    void addShake(float intensity) 
+    {
+        // Si l'intensité est nulle ou négative, on ne fait rien.
+        if(intensity <= 0)
+            return;
         this->shakeMax = intensity;
         this->shakeTime = intensity;
     }

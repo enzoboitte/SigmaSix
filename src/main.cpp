@@ -88,6 +88,7 @@ int main()
     // Shader-based systems
     systems_shaders.push_back(std::make_shared<FogOfWarSystem>(player, camera));
     systems_shaders.push_back(std::make_shared<WallShadowSystem>(player, camera));
+    systems_shaders.push_back(std::make_shared<BloodVignetteSystem>(player, camera));
 
     // ── 5. Game loop ────────────────────────────────────────────────────────
     const float step = 1.f / 50.f;

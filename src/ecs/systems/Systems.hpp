@@ -9,3 +9,4 @@
 #include <SigmaSix/ecs/systems/RenderSystem.hpp>
 #include <SigmaSix/ecs/systems/ProjectileSystem.hpp>
 #include <SigmaSix/ecs/systems/WallShadowSystem.hpp>
+#include <SigmaSix/ecs/systems/BloodVignetteSystem.hpp>
